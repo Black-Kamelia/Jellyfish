@@ -2,6 +2,7 @@ package com.kamelia.jellyfish.rest.file
 
 import java.nio.file.Files as NIOFiles
 import com.kamelia.jellyfish.core.UploadCodeGenerationException
+import com.kamelia.jellyfish.rest.core.pageable.PageDefinitionDTO
 import com.kamelia.jellyfish.rest.core.pageable.PageDTO
 import com.kamelia.jellyfish.rest.user.User
 import com.kamelia.jellyfish.rest.user.UserRole
@@ -14,10 +15,10 @@ import io.ktor.http.content.streamProvider
 import java.net.URLConnection
 import java.nio.file.Path
 import java.util.UUID
+import kotlin.math.ceil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.math.ceil
 
 object FileService {
 
@@ -31,6 +32,8 @@ object FileService {
         val fileName = part.originalFileName!!
         val fileCode = generateUniqueCode()// + "." + Path.of(fileName).extension
         val fileBytes = part.streamProvider().readBytes()
+
+        if (fileName.isBlank()) return QueryResult.badRequest("errors.file.name.empty")
 
         return withContext(Dispatchers.IO) {
             val directory = UPLOAD_PATH.resolve(creator.id.toString())
@@ -62,9 +65,8 @@ object FileService {
         throw UploadCodeGenerationException()
     }
 
-    suspend fun getFiles(user: User, page: Long, pageSize: Int): QueryResult<FilePageDTO, List<ErrorDTO>> {
-        val files = user.getFiles(page, pageSize)
-        val total = user.countFiles()
+    suspend fun getFiles(user: User, page: Long, pageSize: Int, definition: PageDefinitionDTO): QueryResult<FilePageDTO, List<ErrorDTO>> {
+        val (files, total) = user.getFiles(page, pageSize, definition)
         return QueryResult.ok(FilePageDTO(
             PageDTO(
                 files.map { it.toRepresentationDTO() },

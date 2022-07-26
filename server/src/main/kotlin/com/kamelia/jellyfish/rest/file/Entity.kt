@@ -15,6 +15,17 @@ enum class FileVisibility {
     PRIVATE,
     UNLISTED,
     PUBLIC,
+
+    ;
+
+    companion object {
+
+        fun valueOfOrNull(value: String) = try {
+            valueOf(value)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
 }
 
 object Files : AuditableUUIDTable("files") {

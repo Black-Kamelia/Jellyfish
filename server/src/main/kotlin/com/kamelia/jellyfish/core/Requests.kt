@@ -10,9 +10,10 @@ import io.ktor.server.routing.patch
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.util.pipeline.PipelineContext
+import io.ktor.util.pipeline.PipelineInterceptor
 
 inline fun <reified T : Any> Route.requestOrCatch(
-    method: Route.(String, suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit) -> Route,
+    method: Route.(String, PipelineInterceptor<Unit, ApplicationCall>) -> Route,
     vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
@@ -28,7 +29,7 @@ inline fun <reified T : Any> Route.requestOrCatch(
 }
 
 inline fun Route.requestOrCatch(
-    method: Route.(String, suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit) -> Route,
+    method: Route.(String, PipelineInterceptor<Unit, ApplicationCall>) -> Route,
     vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,

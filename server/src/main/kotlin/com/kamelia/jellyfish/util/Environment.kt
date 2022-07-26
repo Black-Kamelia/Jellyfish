@@ -1,5 +1,6 @@
 package com.kamelia.jellyfish.util
 
+import io.ktor.http.ContentType
 import io.ktor.server.application.Application
 
 object Environment {
@@ -16,3 +17,5 @@ object Environment {
     val secretRefresh get() = config.property("jwt.secretRefresh").getString()
     val jwtRealm get() = config.property("jwt.realm").getString()
 }
+
+val ApplicationJSON = ContentType.parse("application/json")

@@ -6,6 +6,8 @@ import com.kamelia.jellyfish.core.ExpiredOrInvalidTokenException
 import com.kamelia.jellyfish.core.InvalidUUIDException
 import com.kamelia.jellyfish.core.MissingHeaderException
 import com.kamelia.jellyfish.core.MissingParameterException
+import com.kamelia.jellyfish.core.MultipartParseException
+import com.kamelia.jellyfish.rest.core.pageable.PageDefinitionDTO
 import com.kamelia.jellyfish.rest.user.UserRole
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -13,6 +15,8 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
+import io.ktor.server.request.contentType
+import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.util.pipeline.PipelineContext
 import java.util.UUID
@@ -40,6 +44,12 @@ val UUIDEntity.uuid: UUID
 fun ApplicationCall.getUUIDOrNull(name: String = "uuid"): UUID? = getParamOrNull(name)?.toUUIDOrNull()
 
 fun ApplicationCall.getUUID(name: String = "uuid"): UUID = getUUIDOrNull(name) ?: throw InvalidUUIDException()
+
+suspend fun ApplicationCall.receivePageDefinition(): PageDefinitionDTO = if (request.contentType() == ApplicationJSON) {
+    receive()
+} else {
+    PageDefinitionDTO()
+}
 
 val PipelineContext<*, ApplicationCall>.jwt: Payload
     get() = this.call.principal<JWTPrincipal>()?.payload ?: throw ExpiredOrInvalidTokenException()
@@ -87,8 +97,8 @@ fun ApplicationCall.getHeader(header: String) = request.headers[header] ?: throw
 suspend fun ApplicationCall.doWithForm(
     onFields: Map<String, suspend (PartData.FormItem) -> Unit> = mapOf(),
     onFiles: Map<String, suspend (PartData.FileItem) -> Unit> = mapOf(),
-) {
-    receiveMultipart().forEachPart { part ->
+) = runCatching { receiveMultipart() }.onSuccess {
+    it.forEachPart { part ->
         when (part) {
             is PartData.FormItem -> {
                 val field = part.name
@@ -102,7 +112,7 @@ suspend fun ApplicationCall.doWithForm(
         }
         part.dispose()
     }
-}
+}.onFailure { throw MultipartParseException() }
 
 private const val CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 fun String.Companion.random(size: Int) = (1..size)

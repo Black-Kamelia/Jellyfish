@@ -2,6 +2,7 @@ package com.kamelia.jellyfish.rest.user
 
 import com.kamelia.jellyfish.core.Hasher
 import com.kamelia.jellyfish.rest.core.pageable.PageDTO
+import com.kamelia.jellyfish.rest.core.pageable.PageDefinitionDTO
 import com.kamelia.jellyfish.util.ErrorDTO
 import com.kamelia.jellyfish.util.QueryResult
 import com.kamelia.jellyfish.util.uuid
@@ -46,9 +47,8 @@ object UserService {
         )
     }
 
-    suspend fun getUsers(page: Long, pageSize: Int): QueryResult<UserPageDTO, List<ErrorDTO>> {
-        val users = Users.getAll(page, pageSize)
-        val total = Users.countAll()
+    suspend fun getUsers(page: Long, pageSize: Int, definition: PageDefinitionDTO): QueryResult<UserPageDTO, List<ErrorDTO>> {
+        val (users, total) = Users.getAll(page, pageSize, definition)
         return QueryResult.ok(
             UserPageDTO(
                 PageDTO(

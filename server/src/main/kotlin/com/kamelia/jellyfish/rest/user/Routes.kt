@@ -11,6 +11,7 @@ import com.kamelia.jellyfish.util.getUUID
 import com.kamelia.jellyfish.util.idRestrict
 import com.kamelia.jellyfish.util.ifRegular
 import com.kamelia.jellyfish.util.jwt
+import com.kamelia.jellyfish.util.receivePageDefinition
 import com.kamelia.jellyfish.util.respond
 import com.kamelia.jellyfish.util.uuid
 import io.ktor.server.application.call
@@ -53,8 +54,9 @@ private fun Route.getAllUsers() = getOrCatch(path = "/all") {
 private fun Route.getPagedUsers() = getOrCatch {
     adminRestrict()
     val (page, pageSize) = call.getPageParameters()
+    val definition = call.receivePageDefinition()
 
-    call.respond(UserService.getUsers(page, pageSize))
+    call.respond(UserService.getUsers(page, pageSize, definition))
 }
 
 private fun Route.updateUser() = patchOrCatch<UserUpdateDTO>(path = "/{uuid}") { body ->

@@ -13,6 +13,7 @@ import com.kamelia.jellyfish.util.getPageParameters
 import com.kamelia.jellyfish.util.getUUID
 import com.kamelia.jellyfish.util.getUUIDOrNull
 import com.kamelia.jellyfish.util.jwt
+import com.kamelia.jellyfish.util.receivePageDefinition
 import com.kamelia.jellyfish.util.respond
 import com.kamelia.jellyfish.util.uuid
 import io.ktor.server.application.call
@@ -54,9 +55,10 @@ private fun Route.getPagedFiles() = getOrCatch(path = "/{uuid?}") {
     val jwtId = jwt.uuid
     val userId = uuid?.apply { if (uuid != jwtId) adminRestrict() } ?: jwtId
     val user = Users.findById(userId) ?: throw ExpiredOrInvalidTokenException()
-
     val (page, pageSize) = call.getPageParameters()
-    call.respond(FileService.getFiles(user, page, pageSize))
+    val definition = call.receivePageDefinition()
+
+    call.respond(FileService.getFiles(user, page, pageSize, definition))
 }
 
 private fun Route.editFile() = patchOrCatch<FileUpdateDTO>(path = "/{uuid}") { body ->

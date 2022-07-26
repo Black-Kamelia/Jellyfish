@@ -4,13 +4,20 @@ import com.kamelia.jellyfish.core.Hasher
 import com.kamelia.jellyfish.database.Connection
 import com.kamelia.jellyfish.rest.core.auditable.AuditableUUIDEntity
 import com.kamelia.jellyfish.rest.core.auditable.AuditableUUIDTable
+import com.kamelia.jellyfish.rest.core.pageable.PageDefinitionDTO
+import com.kamelia.jellyfish.rest.core.pageable.applyFilters
+import com.kamelia.jellyfish.rest.core.pageable.applySort
+import com.kamelia.jellyfish.rest.core.pageable.filter
 import com.kamelia.jellyfish.rest.file.File
 import com.kamelia.jellyfish.rest.file.Files
+import com.kamelia.jellyfish.util.uuid
 import java.time.Instant
 import java.util.UUID
 import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.javatime.timestamp
+import org.jetbrains.exposed.sql.selectAll
 
 enum class UserRole(private val power: Int) {
     REGULAR(1),
@@ -18,6 +25,15 @@ enum class UserRole(private val power: Int) {
     OWNER(100),
 
     ;
+
+    companion object {
+
+        fun valueOfOrNull(value: String) = try {
+            valueOf(value)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+    }
 
     infix fun le(other: UserRole): Boolean = power <= other.power
     infix fun ge(other: UserRole): Boolean = power >= other.power
@@ -48,11 +64,30 @@ object Users : AuditableUUIDTable("users") {
         User.all().toList()
     }
 
-    suspend fun getAll(page: Long, pageSize: Int): List<User> = Connection.query {
-        User.all()
-            .limit(pageSize, page * pageSize)
-            .toList()
-    }
+    suspend fun getAll(page: Long, pageSize: Int, definition: PageDefinitionDTO): Pair<List<User>, Long> =
+        Connection.query {
+            Users.selectAll()
+                .applyFilters(definition.filters) {
+                    when (it.field) {
+                        username.name -> username.filter(it)
+                        email.name -> email.filter(it)
+                        role.name -> role.filter(it)
+                        enabled.name -> enabled.filter(it)
+                        else -> throw IllegalArgumentException("errors.filter.unknown_field.`${it.field}`")
+                    }
+                }.applySort(definition.sorter) {
+                    when (it) {
+                        username.name -> username
+                        email.name -> email
+                        role.name -> role
+                        enabled.name -> enabled
+                        else -> throw IllegalArgumentException("errors.sort.unknown_field.`${it}`")
+                    }
+                }.let {
+                    val rows = User.wrapRows(it)
+                    rows.limit(pageSize, page * pageSize).toList() to rows.count()
+                }
+        }
 
     suspend fun findById(uuid: UUID): User? = Connection.query {
         User.findById(uuid)
@@ -140,7 +175,29 @@ class User(id: EntityID<UUID>) : AuditableUUIDEntity(id, Users) {
         files.toList()
     }
 
-    suspend fun getFiles(page: Long, pageSize: Int): List<File> = Connection.query {
-        files.limit(pageSize, page * pageSize).toList()
-    }
+    suspend fun getFiles(page: Long, pageSize: Int, definition: PageDefinitionDTO): Pair<List<File>, Long> =
+        Connection.query {
+            Files.selectAll()
+                .andWhere { Files.owner eq uuid }
+                .applyFilters(definition.filters) {
+                    when (it.field) {
+                        Files.name.name -> Files.name.filter(it)
+                        Files.mimeType.name -> Files.mimeType.filter(it)
+                        Files.size.name -> Files.size.filter(it)
+                        Files.visibility.name -> Files.visibility.filter(it)
+                        else -> throw IllegalArgumentException("errors.filter.unknown_field.`${it.field}`")
+                    }
+                }.applySort(definition.sorter) {
+                    when (it) {
+                        Files.name.name -> Files.name
+                        Files.mimeType.name -> Files.mimeType
+                        Files.size.name -> Files.size
+                        Files.visibility.name -> Files.visibility
+                        else -> throw IllegalArgumentException("errors.sort.unknown_field.`${it}`")
+                    }
+                }.let {
+                    val rows = File.wrapRows(it)
+                    rows.limit(pageSize, page * pageSize).toList() to rows.count()
+                }
+        }
 }

@@ -4,6 +4,8 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.kamelia.jellyfish.rest.user.Users
 import com.kamelia.jellyfish.util.Environment
+import com.kamelia.jellyfish.util.QueryResult
+import com.kamelia.jellyfish.util.respond
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
@@ -25,9 +27,17 @@ private fun AuthenticationConfig.configureJWT(name: String, secret: String) = jw
     verifier(jwtVerifier)
 
     validate {credential ->
-        val user = Users.findByUsername(credential.subject!!)!!
-        val lastInvalidation = user.lastInvalidation
-        check(lastInvalidation == null || lastInvalidation.isBefore(credential.issuedAt!!.toInstant()))
-        JWTPrincipal(credential.payload)
+        runCatching {
+            val user = Users.findByUsername(credential.subject!!)!!
+            val lastInvalidation = user.lastInvalidation
+            require(lastInvalidation == null || lastInvalidation.isBefore(credential.issuedAt!!.toInstant()))
+            JWTPrincipal(credential.payload)
+        }.onFailure {
+            if (it !is IllegalArgumentException && it !is NullPointerException) throw it
+        }.getOrNull()
+    }
+
+    challenge { _, _ ->
+        call.respond(QueryResult.unauthorized("errors.tokens.expired_or_invalid"))
     }
 }

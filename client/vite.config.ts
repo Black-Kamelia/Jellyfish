@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
 // https://vitejs.dev/config/
-module.exports = defineConfig({
+const config = defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
@@ -12,8 +12,12 @@ module.exports = defineConfig({
     },
   },
   server: {
+    port: 3000,
     watch: {
       usePolling: true,
     },
   },
 });
+
+// noinspection JSUnusedGlobalSymbols
+export default config;

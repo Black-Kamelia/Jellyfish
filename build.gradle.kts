@@ -1,7 +1,7 @@
 import com.github.gradle.node.npm.task.NpmTask
 
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.7.10"
     id("com.github.node-gradle.node") version "3.3.0"
 }
 
@@ -13,7 +13,7 @@ repositories {
 }
 
 node {
-    version.set("16.15.0") // lts version
+    version.set("16.16.0") // lts version
     distBaseUrl.set("https://nodejs.org/dist")
     download.set(true)
     nodeProjectDir.set(file("${project.projectDir}/client"))

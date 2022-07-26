@@ -6,7 +6,8 @@ import java.sql.Connection
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.jetbrains.exposed.sql.Transaction
+import org.jetbrains.exposed.sql.transactions.experimental.suspendedTransactionAsync
 
 object Connection {
 
@@ -26,8 +27,8 @@ object Connection {
 
     suspend fun <T> query(
         dispatcher: CoroutineDispatcher = Dispatchers.IO,
-        block: suspend () -> T,
-    ): T = newSuspendedTransaction(dispatcher) {
+        block: suspend Transaction.() -> T,
+    ): T = suspendedTransactionAsync(dispatcher) {
         block()
-    }
+    }.await()
 }

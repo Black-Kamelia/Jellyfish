@@ -20,9 +20,13 @@ val InvalidUUIDAdvisor = exceptionAdvisor<InvalidUUIDException>(::badRequestMess
 
 val SerializationAdvisor = exceptionAdvisor<SerializationException>(::badRequestMessage)
 
+val MultipartParseAdvisor = exceptionAdvisor<MultipartParseException>(::badRequestMessage)
+
 val ExpiredOrInvalidTokenAdvisor = exceptionAdvisor<ExpiredOrInvalidTokenException> { e, call ->
     call.respond(QueryResult.unauthorized(e.message!!))
 }
+
+val IllegalFilterAdvisor = exceptionAdvisor<IllegalFilterException>(::badRequestMessage)
 
 val GeneralAdvisor = exceptionAdvisor<Exception> { e, call ->
     call.respond(QueryResult.error(HttpStatusCode.InternalServerError, listOf("errors.unknown")))
@@ -31,9 +35,12 @@ val GeneralAdvisor = exceptionAdvisor<Exception> { e, call ->
 
 val BasicAdvisor = arrayOf(
     MissingParameterAdvisor,
+    MissingHeaderAdvisor,
     IllegalArgumentAdvisor,
     InvalidUUIDAdvisor,
     SerializationAdvisor,
+    MultipartParseAdvisor,
     ExpiredOrInvalidTokenAdvisor,
-    GeneralAdvisor
+    IllegalFilterAdvisor,
+    GeneralAdvisor,
 )
