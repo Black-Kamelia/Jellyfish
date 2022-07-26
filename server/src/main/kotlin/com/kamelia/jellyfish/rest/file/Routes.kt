@@ -1,10 +1,6 @@
 package com.kamelia.jellyfish.rest.file
 
 import com.kamelia.jellyfish.core.ExpiredOrInvalidTokenException
-import com.kamelia.jellyfish.core.deleteOrCatch
-import com.kamelia.jellyfish.core.getOrCatch
-import com.kamelia.jellyfish.core.patchOrCatch
-import com.kamelia.jellyfish.core.postOrCatch
 import com.kamelia.jellyfish.rest.user.Users
 import com.kamelia.jellyfish.util.adminRestrict
 import com.kamelia.jellyfish.util.doWithForm
@@ -19,6 +15,10 @@ import com.kamelia.jellyfish.util.uuid
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.delete
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 fun Route.filesRoutes() = route("/files") {
@@ -32,7 +32,7 @@ fun Route.filesRoutes() = route("/files") {
     }
 }
 
-private fun Route.uploadFile() = postOrCatch(path = "/upload") {
+private fun Route.uploadFile() = post("/upload") {
     val uuid = jwt.uuid
     val user = Users.findById(uuid) ?: throw ExpiredOrInvalidTokenException()
 
@@ -41,7 +41,7 @@ private fun Route.uploadFile() = postOrCatch(path = "/upload") {
     ))
 }
 
-private fun Route.uploadFileFromToken() = postOrCatch(path = "/upload/token") {
+private fun Route.uploadFileFromToken() = post("/upload/token") {
     val authToken = call.getHeader("Upload-Token")
     val user = Users.findByUploadToken(authToken) ?: throw ExpiredOrInvalidTokenException()
 
@@ -50,7 +50,7 @@ private fun Route.uploadFileFromToken() = postOrCatch(path = "/upload/token") {
     ))
 }
 
-private fun Route.getPagedFiles() = getOrCatch(path = "/{uuid?}") {
+private fun Route.getPagedFiles() = get("/{uuid?}") {
     val uuid = call.getUUIDOrNull("uuid")
     val jwtId = jwt.uuid
     val userId = uuid?.apply { if (uuid != jwtId) adminRestrict() } ?: jwtId
@@ -61,14 +61,14 @@ private fun Route.getPagedFiles() = getOrCatch(path = "/{uuid?}") {
     call.respond(FileService.getFiles(user, page, pageSize, definition))
 }
 
-private fun Route.editFile() = patchOrCatch<FileUpdateDTO>(path = "/{uuid}") { body ->
+private fun Route.editFile() = patch<FileUpdateDTO>("/{uuid}") { body ->
     val fileId = call.getUUID("uuid")
     val userId = jwt.uuid
 
     call.respond(FileService.updateFile(fileId, userId, body))
 }
 
-private fun Route.deleteFile() = deleteOrCatch(path = "/{uuid}") {
+private fun Route.deleteFile() = delete("/{uuid}") {
     val fileId = call.getUUID("uuid")
     val userId = jwt.uuid
 

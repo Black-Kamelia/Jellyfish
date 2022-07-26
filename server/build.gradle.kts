@@ -34,6 +34,7 @@ dependencies {
     implementation("io.ktor", "ktor-server-sessions-jvm", ktorVersion)
     implementation("io.ktor", "ktor-server-host-common-jvm", ktorVersion)
     implementation("io.ktor", "ktor-server-content-negotiation-jvm", ktorVersion)
+    implementation("io.ktor", "ktor-server-status-pages", ktorVersion)
     implementation("io.ktor", "ktor-serialization-kotlinx-json-jvm", ktorVersion)
     implementation("io.ktor", "ktor-server-netty-jvm", ktorVersion)
     implementation("io.ktor", "ktor-server-cors", ktorVersion)

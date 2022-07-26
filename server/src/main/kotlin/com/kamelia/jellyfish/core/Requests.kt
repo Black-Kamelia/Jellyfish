@@ -12,143 +12,57 @@ import io.ktor.server.routing.put
 import io.ktor.util.pipeline.PipelineContext
 import io.ktor.util.pipeline.PipelineInterceptor
 
-inline fun <reified T : Any> Route.requestOrCatch(
+
+inline fun <reified T : Any> Route.request(
     method: Route.(String, PipelineInterceptor<Unit, ApplicationCall>) -> Route,
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
+    path: String,
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
 ): Route = method(path) {
-    runCatching {
-        val body = call.receive<T>()
-        block(body)
-    }.onFailure { e ->
-        advisors.find { it.throwableClass.isInstance(e) }
-            ?.let { it.handle(e, call) }
-            ?: throw e
-    }
+    val body = call.receive<T>()
+    block(body)
 }
 
-inline fun Route.requestOrCatch(
-    method: Route.(String, PipelineInterceptor<Unit, ApplicationCall>) -> Route,
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-): Route = method(path) {
-    runCatching {
-        block()
-    }.onFailure { e ->
-        advisors.find { it.throwableClass.isInstance(e) }
-            ?.let { it.handle(e, call) }
-            ?: throw e
-    }
-}
-
-inline fun <reified T : Any> Route.getOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
+inline fun <reified T : Any> Route.get(
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
-) = requestOrCatch(
+) = request(
     Route::get,
-    *advisors,
     path = path,
     block = block
 )
 
-inline fun Route.getOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-) = requestOrCatch(
-    Route::get,
-    *advisors,
-    path = path,
-    block = block
-)
-
-inline fun <reified T : Any> Route.postOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
+inline fun <reified T : Any> Route.post(
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
-) = requestOrCatch(
+) = request(
     Route::post,
-    *advisors,
     path = path,
     block = block
 )
 
-inline fun Route.postOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-) = requestOrCatch(
-    Route::post,
-    *advisors,
-    path = path,
-    block = block
-)
-
-inline fun <reified T : Any> Route.putOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
+inline fun <reified T : Any> Route.put(
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
-) = requestOrCatch(
+) = request(
     Route::put,
-    *advisors,
     path = path,
     block = block
 )
 
-inline fun Route.putOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-) = requestOrCatch(
-    Route::put,
-    *advisors,
-    path = path,
-    block = block
-)
-
-inline fun <reified T : Any> Route.deleteOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
+inline fun <reified T : Any> Route.delete(
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
-) = requestOrCatch(
+) = request(
     Route::delete,
-    *advisors,
     path = path,
     block = block
 )
 
-inline fun Route.deleteOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-) = requestOrCatch(
-    Route::delete,
-    *advisors,
-    path = path,
-    block = block
-)
-
-inline fun <reified T : Any> Route.patchOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
+inline fun <reified T : Any> Route.patch(
     path: String = "",
     crossinline block: suspend PipelineContext<Unit, ApplicationCall>.(T) -> Unit,
-) = requestOrCatch(
+) = request(
     Route::patch,
-    *advisors,
-    path = path,
-    block = block
-)
-
-inline fun Route.patchOrCatch(
-    vararg advisors: ExceptionAdvisor<Throwable> = BasicAdvisor,
-    path: String = "",
-    crossinline block: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit,
-) = requestOrCatch(
-    Route::patch,
-    *advisors,
     path = path,
     block = block
 )

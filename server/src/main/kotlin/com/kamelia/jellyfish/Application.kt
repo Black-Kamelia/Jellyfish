@@ -4,6 +4,7 @@ import com.kamelia.jellyfish.database.Connection
 import com.kamelia.jellyfish.database.configureLiquibase
 import com.kamelia.jellyfish.plugins.configureAuthentication
 import com.kamelia.jellyfish.plugins.configureCORS
+import com.kamelia.jellyfish.plugins.configureExceptionAdvisors
 import com.kamelia.jellyfish.plugins.configureRouting
 import com.kamelia.jellyfish.plugins.configureSerialization
 import com.kamelia.jellyfish.util.Environment
@@ -24,4 +25,5 @@ fun Application.module() {
     configureSerialization()
     configureCORS()
     configureAuthentication()
+    configureExceptionAdvisors()
 }
